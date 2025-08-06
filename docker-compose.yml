@@ -1,0 +1,50 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: education_platform_db
+    restart: always
+    environment:
+      POSTGRES_DB: education_platform
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - education_network
+
+  # Node.js Express API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: education_platform_api
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=education_platform
+      - DB_USER=admin
+      - DB_PASSWORD=password123
+      - JWT_SECRET=your_super_secret_jwt_key_here
+      - JWT_EXPIRES_IN=7d
+    depends_on:
+      - postgres
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - education_network
+
+volumes:
+  postgres_data:
+
+networks:
+  education_network:
+    driver: bridge
